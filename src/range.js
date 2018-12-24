@@ -1,44 +1,42 @@
-'use strict';
 
-module.exports = range;
+export default function range(ids, coords, minX, minY, maxX, maxY, nodeSize) {
+    const stack = [0, ids.length - 1, 0];
+    const result = [];
 
-function range(ids, coords, minX, minY, maxX, maxY, nodeSize) {
-    var stack = [0, ids.length - 1, 0];
-    var result = [];
-    var x, y;
-
+    // recursively search for items in range in the kd-sorted arrays
     while (stack.length) {
-        var axis = stack.pop();
-        var right = stack.pop();
-        var left = stack.pop();
+        const axis = stack.pop();
+        const right = stack.pop();
+        const left = stack.pop();
 
+        // if we reached "tree node", search linearly
         if (right - left <= nodeSize) {
-            for (var i = left; i <= right; i++) {
-                x = coords[2 * i];
-                y = coords[2 * i + 1];
+            for (let i = left; i <= right; i++) {
+                const x = coords[2 * i];
+                const y = coords[2 * i + 1];
                 if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[i]);
             }
             continue;
         }
 
-        var m = Math.floor((left + right) / 2);
+        // otherwise find the middle index
+        const m = (left + right) >> 1;
 
-        x = coords[2 * m];
-        y = coords[2 * m + 1];
-
+        // include the middle item if it's in range
+        const x = coords[2 * m];
+        const y = coords[2 * m + 1];
         if (x >= minX && x <= maxX && y >= minY && y <= maxY) result.push(ids[m]);
 
-        var nextAxis = (axis + 1) % 2;
-
+        // queue search in halves that intersect the query
         if (axis === 0 ? minX <= x : minY <= y) {
             stack.push(left);
             stack.push(m - 1);
-            stack.push(nextAxis);
+            stack.push(1 - axis);
         }
         if (axis === 0 ? maxX >= x : maxY >= y) {
             stack.push(m + 1);
             stack.push(right);
-            stack.push(nextAxis);
+            stack.push(1 - axis);
         }
     }
 
